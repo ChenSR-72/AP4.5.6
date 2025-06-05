@@ -402,7 +402,14 @@ bool Plane::rc_failsafe_active(void) const
     if (!rc_throttle_value_ok()) {
         return true;
     }
-    if (millis() - failsafe.last_valid_rc_ms > 1000) {
+
+    u_int rc_extend2long = 1;//@yu 若斷線，將維持最後一筆輸入，直到觸發long failsafe timeout(gcs failsafe僅執行long failsafe)，Q mode除外
+
+    if (g.gcs_heartbeat_fs_enabled > 0 && !g.throttle_fs_enabled && g.ti_hold_thr2long && control_mode != &mode_qhover && control_mode != &mode_qloiter && control_mode != &mode_qstabilize && control_mode != &mode_qacro) {
+        rc_extend2long = g.fs_timeout_long;
+    }
+
+    if (millis() - failsafe.last_valid_rc_ms > 1000 * rc_extend2long) {
         // we haven't had a valid RC frame for 1 seconds
         return true;
     }
